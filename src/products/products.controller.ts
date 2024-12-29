@@ -5,38 +5,39 @@ import { PaginationDto } from 'src/common';
 import { ProductsMicroservice } from 'src/config';
 import { CreateProductDto } from './dto/create-product.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
+import { NATS_SERVICE } from 'src/transports/nats/injection-token';
 
 @Controller('products')
 export class ProductsController {
-  constructor(@Inject(ProductsMicroservice.name) private readonly produsctsClient: ClientProxy) {}
+  constructor(@Inject(NATS_SERVICE) private readonly messageClient: ClientProxy) {}
 
   @Post()
   createProduct(@Body() productsDto: CreateProductDto){
-    return this.produsctsClient.send<any, CreateProductDto>(ProductsMicroservice.Actions.CREATE, productsDto)
+    return this.messageClient.send<any, CreateProductDto>(ProductsMicroservice.Actions.CREATE, productsDto)
       .pipe(catchError(e => { throw new RpcException(e)}));
   }
 
   @Get()
   findAllProducts(@Query() paginationDto: PaginationDto){
-      return this.produsctsClient.send<any, PaginationDto>(ProductsMicroservice.Actions.FIND_ALL, paginationDto)
+      return this.messageClient.send<any, PaginationDto>(ProductsMicroservice.Actions.FIND_ALL, paginationDto)
         .pipe(catchError(e => { throw new RpcException(e)}))
   }
 
   @Get(':id')
   async findOne(@Param('id') id: string){
-    return this.produsctsClient.send(ProductsMicroservice.Actions.FIND_ONE,{id})
+    return this.messageClient.send(ProductsMicroservice.Actions.FIND_ONE,{id})
       .pipe(catchError(e => { throw new RpcException(e)}));
   }
 
   @Delete(':id')
   delete(@Param('id') id: string){
-    return this.produsctsClient.send(ProductsMicroservice.Actions.DELETE, {id})
+    return this.messageClient.send(ProductsMicroservice.Actions.DELETE, {id})
       .pipe(catchError(e => { throw new RpcException(e)}));
   }
 
   @Patch(':id')
   patch(@Param('id', ParseIntPipe) id: number, @Body() body: UpdateProductDto){
-    return this.produsctsClient.send<any>(ProductsMicroservice.Actions.UPDATE, {...body, id})
+    return this.messageClient.send<any>(ProductsMicroservice.Actions.UPDATE, {...body, id})
       .pipe(catchError(e => { throw new RpcException(e)}));
   }
 }
